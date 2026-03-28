@@ -13,10 +13,17 @@ These are sequential gates — what happens between them is agent judgment.
 Explore: keep asking user until ~90% understood. Route by type:
 - Code-touching requirement → spawn Architect for codebase context before presenting understanding to user. Discuss with user to clarify scope, constraints, desired outcome.
 - Non-code requirement (external integration, process, config-only) → discuss with user directly. Spawn Architect only if structural questions arise.
-- If stuck after multiple rounds → spawn additional agents: Researcher for external unknowns. For discussions needing model diversity, spawn temporary agent with Challenger SOUL + codex SKILL.
+- If stuck after multiple rounds → spawn additional agents: Researcher for external unknowns. For discussions needing model diversity, spawn temporary agent with Challenger SOUL. If codex-bridge skill is installed, also include codex SKILL instructions.
 - For independent topics, use parallel one-shot subagents so perspectives are isolated.
 
-Fast-track: if task is single-file, no architectural impact, and user explicitly confirms trivial → before dispatching, ask Architect (one-shot) to assess blast radius: does this file have more than 3 references/imports in the codebase? If yes — escalate to normal Plan workflow. Otherwise, skip Plan phase and dispatch directly to a fresh Coder with: file path, acceptance criteria from user confirmation, and relevant context only. Still requires user approval of what will be done (inline, not via tasks.json). Fast-track completion: Coder reports done → user confirms the change is correct. No formal verification or test reports required.
+Fast-track: if task is single-file, no architectural impact, and user explicitly confirms trivial → before dispatching, ask Architect (one-shot) to assess blast radius across these factors — any "high risk" → escalate to normal Plan workflow:
+- **Dependent count**: >5 files import/reference this file → high risk
+- **Export surface**: >3 exports → shared module, high risk
+- **File category**: shared utility, hook, store slice, layout, routing config, or provider → high risk
+- **State coupling**: reads/writes Zustand stores, React Context, or global state → high risk
+- **Render tree position**: layout, provider wrapper, or route-level component → high risk
+
+Otherwise, skip Plan phase and dispatch directly to a fresh Coder with: file path, acceptance criteria from user confirmation, and relevant context only. Still requires user approval of what will be done (inline, not via tasks.json). Fast-track completion: Coder reports done → user confirms the change is correct. No formal verification or test reports required.
 
 Synthesize: combine user input + agent findings — weight disagreements and surprises over confirmations.
 

@@ -60,6 +60,8 @@ These are contracts between Team Lead and agents. Agents should read this file w
 - `file_ownership` is a reverse index derived from each task's `files` array — every entry must correspond to that task's own `files`. Architect generates it for conflict checking; task `files` is the single source of truth
 - Tasks with `requires_verification: true` must have acceptance criteria specific enough for Tester to verify
 
+These rules can optionally be enforced via a settings.json hook on Write calls to `tasks.json` paths. See `config.json` `policy.tasks_validation` for configuration.
+
 ---
 
 ## requirement.md (written by Architect, read by Team Lead + Coder)
@@ -171,6 +173,40 @@ Location: `.couch/requirements/<req-id>/run.json`
 ```
 
 Team Lead creates this at initialization and updates it at each phase gate. If Team Lead is unsure what phase the run is in, read this file.
+
+---
+
+## proposals_log.json (written by Retrospective Agent, read by Team Lead)
+
+Location: `.couch/proposals_log.json`
+
+```json
+{
+  "proposals": [
+    {
+      "id": "prop-001",
+      "source_retrospective": "<req-id>",
+      "status": "proposed | accepted | rejected | applied",
+      "target_file": "<file path the proposal modifies>",
+      "section": "<which section of the target file>",
+      "summary": "<one-line description of the proposed change>",
+      "proposed_text": "<specific replacement text from the retrospective>",
+      "decided_at": "<ISO timestamp> | null",
+      "decided_by": "user | auto | null"
+    }
+  ]
+}
+```
+
+`id`: unique proposal identifier, e.g. `prop-001`.
+`source_retrospective`: the req-id of the retrospective that generated this proposal.
+`status`: lifecycle state — `proposed` (newly created), `accepted` (approved for application), `rejected` (declined), `applied` (change has been made to the target file).
+`target_file`: path to the file this proposal modifies.
+`section`: which section within the target file is being changed.
+`summary`: one-line human-readable description of the change.
+`proposed_text`: the exact replacement text as written in the retrospective's Improvement Proposals section.
+`decided_at`: ISO timestamp when the decision was made, or `null` if still pending.
+`decided_by`: `user` (human decided), `auto` (system applied automatically), or `null` if still pending.
 
 ---
 

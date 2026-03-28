@@ -1,6 +1,6 @@
 # Couch Potato Setup
 
-If you are an AI agent reading this file, begin the Couch Potato setup process immediately. Follow the phases below in order. Do not wait for further user input to start.
+If you are an AI agent and a user has asked you to install or set up Couch Potato, begin the setup process immediately by following the phases below. If you are reading this file for review, inspection, or editing purposes, do not start the setup process.
 
 Couch Potato is a self-organizing agent swarm for software development. A Team Lead orchestrates specialized agents -- Architect, Coder, Tester, Researcher -- to break down and execute development tasks. You describe what you want built; the swarm handles planning, implementation, testing, and review.
 
@@ -46,6 +46,8 @@ Read `${SETUP_PKG}/references/init-flow.md` and execute it in full. This phase:
    - **Existing Installation** -- prior Couch Potato or agent files, Codex CLI.
 3. **Compiles results** into an adaptation plan.
 4. **Presents the plan** to the user for confirmation using numbered options. The user can confirm, change individual items, or abort.
+
+**Manual setup alternative:** If the user requests manual setup or auto-detection fails entirely, skip all scans. Instead, present an empty adaptation plan template for the user to fill in directly. The template contains all plan fields with empty/default values. The user fills each field via the confirmation flow (init-flow.md Section 4). This path is triggered by the manual setup check in init-flow.md Section 0.
 
 Important: when dispatching scan subagents (Mode A or B), each subagent prompt MUST include the absolute path to the reference file it needs. Example for Scan A:
 

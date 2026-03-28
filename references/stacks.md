@@ -157,20 +157,20 @@ Always verify by reading the actual workspace config rather than assuming the de
 
 ## 6. Ambiguous Cases
 
-When multiple manifest files are detected at the project root, do not guess. Present the user with a summary and ask for clarification.
+When multiple manifest files are detected at the project root, do not guess — report ALL detected stacks in the output. Do not ask the user during the scan. Ambiguity is resolved during the user confirmation flow.
 
-**Example prompt when ambiguous:**
+**Example structured output when ambiguous:**
+| Field | Value |
+|-------|-------|
+| `language` | `["Node.js", "Python"]` |
+| `framework` | `["Next.js", null]` |
+| ... | ... |
 
-> I found multiple manifests: `package.json` (Node.js) and `requirements.txt` (Python). This may be a full-stack project.
->
-> How is this project structured?
-> 1. Single app — one language is primary, the other is tooling
-> 2. Monorepo — separate frontend and backend packages
-> 3. Other — describe the structure
+Note: The user will resolve which stack is primary during the confirmation flow (init-flow.md Section 4, Item 1).
 
 **Other ambiguous scenarios:**
 
-- Multiple `build.gradle` files with no root `settings.gradle` — ask which subproject is the main entry point.
-- `package.json` with both `next` and `express` — may be a custom server setup; ask whether Next.js uses a custom server.
-- Python project with both `pyproject.toml` and `requirements.txt` — ask which is authoritative (modern projects use `pyproject.toml`; `requirements.txt` may be for deployment only).
-- No manifest files found — ask the user to identify the language and build tool manually.
+- Multiple `build.gradle` files with no root `settings.gradle` — report all subprojects in the output.
+- `package.json` with both `next` and `express` — may be a custom server setup; report both in the output.
+- Python project with both `pyproject.toml` and `requirements.txt` — report both in the output.
+- No manifest files found — report `language: null` in the output.

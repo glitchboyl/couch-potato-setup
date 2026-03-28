@@ -4,7 +4,7 @@
   "title": "Couch Potato Config",
   "description": "Schema for .couch/config.json",
   "type": "object",
-  "required": ["version", "skill"],
+  "required": ["version", "skill", "server_ports"],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -17,7 +17,7 @@
     },
     "server_ports": {
       "type": "object",
-      "description": "Named port assignments for the project's servers",
+      "description": "Named port assignments for the project's servers. Can be an empty object if no dev server is used.",
       "additionalProperties": {
         "type": "integer",
         "minimum": 1,
@@ -37,11 +37,23 @@
     },
     "check_command": {
       "type": "string",
-      "description": "Command Coders run after each change to type-check the project (e.g. \"pnpm type-check\")"
+      "default": "",
+      "description": "Command Coders run after each change to type-check the project (e.g. \"pnpm type-check\"). Optional — omit if the project has no compile/type-check step."
     },
     "lint_command": {
       "type": "string",
-      "description": "Command Coders run after each change to lint and auto-fix (e.g. \"pnpm lint:fix\")"
+      "default": "",
+      "description": "Command Coders run after each change to lint and auto-fix (e.g. \"pnpm lint:fix\"). Optional — omit if the project has no lint step."
+    },
+    "build_command": {
+      "type": "string",
+      "default": "",
+      "description": "Command to build the project for production (e.g. \"pnpm build\"). Optional — omit if the project has no build step."
+    },
+    "dev_command": {
+      "type": "string",
+      "default": "",
+      "description": "Command to start the development server (e.g. \"pnpm dev\"). Optional — omit if the project has no dev server."
     },
     "policy": {
       "type": "object",
@@ -66,6 +78,10 @@
           "examples": [
             ["user_override", "complexity_rule", "task_model", "agent_default"]
           ]
+        },
+        "tasks_validation": {
+          "type": "boolean",
+          "description": "Enable settings.json hook to validate tasks.json on write"
         },
         "default_requires_verification_by_type": {
           "type": "object",

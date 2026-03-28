@@ -6,6 +6,18 @@ Prerequisites: `stacks.md` (stack detection heuristics) and `claude-md-guide.md`
 
 ---
 
+## 0. Manual Setup Check
+
+Before running scans, check if the user explicitly requested manual setup (e.g., said "manual setup", "skip detection", or "I'll configure manually").
+
+If manual setup is requested:
+1. Skip all scans (Section 2).
+2. Present an empty adaptation plan template with all fields set to placeholder values.
+3. Let the user fill in each field directly via the confirmation flow (Section 4).
+4. Proceed to Section 4 with the user-provided values.
+
+---
+
 ## 1. Bootstrap Detection
 
 Determine the orchestration mode by trying capabilities in order. Use the first mode that succeeds.
@@ -56,7 +68,7 @@ Four independent scan tasks. Each has a defined prompt, target files, and expect
 > 2. Identify the lock file to determine the package manager (Section 2).
 > 3. Read manifest dependencies to detect the framework (Section 3).
 > 4. Check for monorepo indicators (Section 4).
-> 5. If ambiguous (multiple manifests), follow Section 6 — present options and ask the user.
+> 5. If ambiguous (multiple manifests), report ALL detected stacks in the output — do NOT ask the user during the scan. Ambiguity is resolved in Section 4 (User Confirmation Flow) where the user reviews Item 1 (Stack).
 >
 > Return a structured result with these fields only.
 
@@ -115,7 +127,7 @@ Four independent scan tasks. Each has a defined prompt, target files, and expect
 > 2. Check for `.claude/settings.json` and `.claude/settings.local.json`.
 > 3. Check for CLAUDE.md in all three locations per `references/claude-md-guide.md` Section 1 (Location Priority).
 > 4. If a CLAUDE.md exists, assess it using the rubric in `references/claude-md-guide.md` Section 1 (Assessment Rubric). Score each of the 5 categories.
-> 5. Check if Agent Teams is already configured in settings (look for `"teams"` key).
+> 5. Check if Agent Teams is already configured (look for `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` in the `env` key of `.claude/settings.json` or `.claude/settings.local.json`).
 >
 > Return a structured result.
 
@@ -181,10 +193,34 @@ After all four scans complete, merge results into a single **adaptation plan**.
 | `lint_command` | `structure.lint_command` | Default from `stacks.md` Section 5 |
 | `dev_command` | `structure.dev_command` | Default from `stacks.md` Section 5 |
 | `dev_port` | `structure.dev_port` | Default from `stacks.md` Section 5 |
+| `build_command` | `structure.build_command` | Default from `stacks.md` Section 5 |
 | `frontend_path` | `structure.frontend_path` | Project root (`"."`) |
-| `claude_md_status` | Derived from `claude_setup.claude_md_assessment` | `"missing"` |
+| `claude_md_action` | Derived from user choice (see CLAUDE.md action flow) | `"generate"` |
 | `settings_target` | `"settings.local.json"` if `claude_setup.has_settings` else `"settings.json"` | `"settings.json"` |
-| `existing_agents_action` | See conflict resolution below | `"none"` |
+| `agent_conflict_action` | See conflict resolution below | `"none"` |
+| `has_codex` | `installation.has_codex` | `false` |
+| `confirmed` | Set to `true` when user confirms (Section 4) | `false` |
+
+### Canonical Adaptation Plan Schema
+
+The final adaptation plan object passed to the install phase has exactly these fields:
+
+```json
+{
+  "stack_label": "string",
+  "check_command": "string",
+  "lint_command": "string",
+  "dev_command": "string",
+  "dev_port": "number",
+  "build_command": "string",
+  "frontend_path": "string",
+  "claude_md_action": "skip | keep | patch | generate",
+  "settings_target": "settings.json | settings.local.json",
+  "agent_conflict_action": "none | merge | overwrite | skip | update | clean",
+  "has_codex": "boolean",
+  "confirmed": "boolean"
+}
+```
 
 ### Conflict Resolution (Existing Agents)
 
@@ -198,16 +234,18 @@ When `installation.has_agents` is true or `installation.has_couch_potato_skill` 
 
 Default recommendation: **Merge** for agents, **Update** for existing Couch Potato. Present options to user in the confirmation flow (Section 4).
 
-### CLAUDE.md Status Derivation
+### CLAUDE.md Action Derivation
 
-Based on `claude_setup.claude_md_assessment`:
+The adaptation plan stores the user's chosen action (not the assessment status). Derive the default recommendation from the assessment, then let the user override in Section 4.
 
-| Assessment Result | Status Label | Action |
-|-------------------|-------------|--------|
-| All 5 categories = complete | `"ready"` | No changes needed |
-| 1-2 categories = partial | `"needs-patch"` | Will patch missing sections (show diff to user) |
-| Any category = minimal | `"needs-generation"` | Will generate from template per `claude-md-guide.md` Section 2 |
-| No CLAUDE.md found | `"missing"` | Will generate from template per `claude-md-guide.md` Section 2 |
+| Assessment Result | Default Action | Meaning |
+|-------------------|---------------|---------|
+| All 5 categories = complete | `"keep"` | No changes needed |
+| 1-2 categories = partial | `"patch"` | Will patch missing sections (show diff to user) |
+| Any category = minimal | `"generate"` | Will generate from template per `claude-md-guide.md` Section 2 |
+| No CLAUDE.md found | `"generate"` | Will generate from template per `claude-md-guide.md` Section 2 |
+
+Canonical action values: `skip`, `keep`, `patch`, `generate`. The user selects the final value in the confirmation flow (Section 4, Item 6).
 
 ---
 
@@ -224,9 +262,9 @@ Detected configuration:
 3. Lint command: <lint_command>
 4. Dev server: <dev_command> (port <dev_port>)
 5. Frontend path: <frontend_path>
-6. CLAUDE.md: <claude_md_status> — <brief details>
+6. CLAUDE.md: <claude_md_action> — <brief details>
 7. Settings target: <settings_target>
-8. Existing agents: <existing_agents_action> — <details if any>
+8. Existing agents: <agent_conflict_action> — <details if any>
 
 [C] Confirm all  |  [number] Change specific item  |  [A] Abort
 ```
@@ -242,10 +280,11 @@ Detected configuration:
 - **Item 3 (Lint command)**: Show detected value. User can type a replacement command.
 - **Item 4 (Dev server)**: Show command and port separately. User can change either or both.
 - **Item 5 (Frontend path)**: Show detected path. User can type a replacement path. Validate the path exists.
-- **Item 6 (CLAUDE.md)**: Show the assessment details. Options:
-  - If `"ready"`: `[K] Keep as-is`
-  - If `"needs-patch"`: `[P] Show and apply patches | [K] Keep as-is | [G] Regenerate from scratch`
-  - If `"needs-generation"` or `"missing"`: `[G] Generate from template | [S] Skip (not recommended)`
+- **Item 6 (CLAUDE.md)**: Show the assessment details and current action. Options:
+  - If default is `"keep"`: `[K] Keep as-is | [P] Patch missing sections | [G] Regenerate from scratch | [S] Skip`
+  - If default is `"patch"`: `[P] Show and apply patches | [K] Keep as-is | [G] Regenerate from scratch | [S] Skip`
+  - If default is `"generate"`: `[G] Generate from template | [S] Skip (not recommended)`
+  - The user's choice sets `claude_md_action` to one of: `skip`, `keep`, `patch`, `generate`.
 - **Item 7 (Settings target)**: Toggle between `settings.json` and `settings.local.json`. Explain the difference:
   > `settings.json` — shared with team (committed to git). Use if the whole team uses Claude Code.
   > `settings.local.json` — personal only (gitignored). Use if only you use Claude Code.

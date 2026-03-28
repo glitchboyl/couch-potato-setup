@@ -12,10 +12,10 @@ Before writing any files, verify all preconditions.
 
 ### Checks
 
-1. **Adaptation plan confirmed** — The plan object must have a `confirmed: true` flag (set by the confirmation flow in `init-flow.md` Section 4). If not confirmed, abort with: `"No confirmed adaptation plan. Run the init flow first."`
+1. **Adaptation plan confirmed** — The plan object must have `confirmed: true` (set by the confirmation flow in `init-flow.md` Section 4). If not confirmed, abort with: `"No confirmed adaptation plan. Run the init flow first."`
 
-2. **Write permissions** — Attempt to create a temporary file at `<project_root>/.couch/.write-test`. If it fails, abort with: `"Cannot write to project directory. Check file permissions."`
-   - Delete the test file immediately after the check.
+2. **Write permissions** — Attempt to create a temporary file at `<project_root>/.couch-potato-write-test`. If it fails, abort with: `"Cannot write to project directory. Check file permissions."`
+   - Delete the test file immediately after the check. This tests at the project root because `.couch/` may not exist yet.
 
 3. **Setup package readable** — Verify the setup package `templates/` directory is accessible. Check that these paths exist:
    - `templates/skill/SKILL.md`
@@ -58,6 +58,7 @@ Write all files to `.couch/.staging/` before touching any final locations. This 
     codex-bridge/
       SKILL.md
   config.json             -> final: .couch/config.json
+  proposals_log.json      -> final: .couch/proposals_log.json
   manifest.json           -> consumed during install, then deleted
 ```
 
@@ -84,6 +85,8 @@ Write all files to `.couch/.staging/` before touching any final locations. This 
      "frontend_path": <plan.frontend_path or ".">,
      "check_command": <plan.check_command>,
      "lint_command": <plan.lint_command>,
+     "build_command": <plan.build_command>,
+     "dev_command": <plan.dev_command>,
      "policy": {
        "enable_fast_track": true,
        "review_prompt_required": true,
@@ -99,9 +102,11 @@ Write all files to `.couch/.staging/` before touching any final locations. This 
    }
    ```
 
-   If the plan includes an existing config to merge (`existing_installation.action = "merge"`), read the existing `.couch/config.json` first. Keep existing values for any field that is already set; only fill missing fields from the plan. The `version` field always updates to `"3.0.0"`.
+   If the plan includes an existing config to merge (`agent_conflict_action = "merge"`), read the existing `.couch/config.json` first. Keep existing values for any field that is already set; only fill missing fields from the plan. The `version` field always updates to `"3.0.0"`.
 
-6. **Write manifest.json**: List every staged file and its intended final path:
+6. **Generate proposals_log.json**: Write `.couch/.staging/proposals_log.json` with content: `{"proposals":[]}`
+
+7. **Write manifest.json**: List every staged file and its intended final path:
 
    ```json
    {
@@ -109,6 +114,7 @@ Write all files to `.couch/.staging/` before touching any final locations. This 
        { "staged": ".couch/.staging/skill/SKILL.md", "target": ".claude/skills/couch-potato/SKILL.md" },
        { "staged": ".couch/.staging/agents/architect.md", "target": ".claude/agents/architect.md" },
        ...
+       { "staged": ".couch/.staging/proposals_log.json", "target": ".couch/proposals_log.json" }
      ],
      "directories": [
        ".couch/requirements/",
@@ -140,7 +146,7 @@ Verify the staging area before committing to the install.
    - `frontend_path` must be a valid relative path (no leading `/`, no `..`).
    - If validation fails, list each violation and abort.
 
-3. **No unresolved placeholders**: Scan all staged `.md` and `.json` files for the pattern `<[A-Za-z_]+>` (angle-bracket placeholders). If any are found, list them and abort. Template files use these as documentation examples within fenced code blocks — only flag placeholders that appear outside of code fences.
+3. **No unresolved placeholders**: Scan `.couch/.staging/config.json` only for the pattern `<[A-Za-z_]+>` (angle-bracket placeholders). If any are found, list them and abort. Template `.md` files are copied verbatim and intentionally contain tokens like `<req-id>`, `<task-id>`, `<title>` — do NOT scan them for placeholders.
 
 If all checks pass, proceed to Section 4.
 
@@ -174,6 +180,7 @@ Process the manifest in order:
 
 3. **Install config**:
    - Copy `.couch/.staging/config.json` to `.couch/config.json` (backup existing first if present).
+   - Copy `.couch/.staging/proposals_log.json` to `.couch/proposals_log.json` (backup existing first if present).
 
 4. **Create empty directories** listed in `manifest.directories` if they don't already exist.
 
@@ -199,20 +206,20 @@ Verify these are NOT matched by any gitignore pattern:
 - `.couch/config.json`
 - `.couch/retrospectives/`
 
-If they are matched (e.g., by a broad `.couch/` pattern), warn the user:
-> `.couch/config.json` is currently gitignored. This file should be committed so your team shares the same agent config. Remove the conflicting gitignore pattern? [Y/n]
+If they are matched (e.g., by a broad `.couch/` pattern), warn the user but do NOT modify existing entries:
+> Warning: `.couch/config.json` is currently gitignored by an existing pattern. This file should be committed so your team shares the same agent config. Please adjust your .gitignore manually to allow it.
 
 ### Implementation
 
 1. Read `.gitignore` (create if it doesn't exist).
-2. Check for existing entries. Only add lines that are missing.
+2. Check if the `# Couch Potato` comment block already exists in the file. If it does, skip the entire append and move to the 'Must NOT be gitignored' verification. Otherwise, check for existing entries and only ADD lines that are missing.
 3. Append new entries at the end, preceded by a comment:
    ```
    # Couch Potato
    .couch/requirements/
    .couch/.staging/
    ```
-4. Do not modify or remove any existing gitignore entries.
+4. **Never modify or remove any existing gitignore entries.** Only append new lines.
 
 ---
 
@@ -224,7 +231,7 @@ Update the Claude Code settings file to enable Agent Teams.
 
 Use the file the user selected in the adaptation plan:
 - `settings_target = "settings.json"` -> `.claude/settings.json`
-- `settings_target = "settings.local"` -> `.claude/settings.local`
+- `settings_target = "settings.local.json"` -> `.claude/settings.local.json`
 
 ### Procedure
 
@@ -249,7 +256,7 @@ If the file already has `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1"`, skip the wr
 
 Apply CLAUDE.md changes based on the user's confirmed choice from the adaptation plan.
 
-### Action: `ready`
+### Action: `skip` or `keep`
 
 No changes. Skip this section.
 
@@ -298,6 +305,7 @@ Verify the installation is complete and functional.
    - `.couch/config.json` — must exist
    - `.couch/requirements/` — must be a directory
    - `.couch/retrospectives/` — must be a directory
+   - `.couch/proposals_log.json` — must exist and parse as valid JSON
    - If codex bridge was installed: `.claude/skills/codex-bridge/SKILL.md` — must exist
 
 2. **Config readable**: Read `.couch/config.json` and verify it parses as valid JSON.
@@ -387,7 +395,7 @@ Modified files:
 - .claude/<settings_target>     (enabled Agent Teams)
 [if CLAUDE.md changed] - <claude_md_location>  (<action taken>)
 
-SOULs are customizable -- edit the agent files in .claude/agents/ to evolve how your team works.
+SOULs define each agent's cognitive style. They live in `.claude/skills/couch-potato/references/souls/`. You can customize them via `/couch-potato` — the Team Lead reads and applies SOULs when spawning agents.
 
 Use /couch-potato to start your first requirement.
 

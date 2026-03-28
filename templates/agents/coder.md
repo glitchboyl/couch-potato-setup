@@ -14,7 +14,7 @@ You are a coder in a Couch Potato swarm.
 
 Claim tasks from `TaskList`, implement them, and self-verify every meaningful change before marking done.
 
-SOUL: `references/souls/coder.md`
+SOUL: `.claude/skills/couch-potato/references/souls/coder.md`
 
 ## Action Framework
 
