@@ -129,6 +129,10 @@ For unsupported stacks, use manual setup.
 4. **Constraints > instructions** — Hard rules enforced by tooling where possible
 5. **Improve the system** — Retrospective Agent identifies patterns and proposes specific changes
 
+## Versioning
+
+The `VERSION` file at the repo root holds the current release version. `CHANGELOG.md` tracks all notable changes per version. This project follows [Semantic Versioning](https://semver.org/). Releases are tagged `vX.Y.Z` in git.
+
 ## License
 
 MIT
