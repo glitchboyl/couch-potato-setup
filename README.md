@@ -58,19 +58,19 @@ Couch Potato installs in one of two modes depending on your environment:
 Step 1 — Add the marketplace:
 
 ```bash
-claude plugin marketplace add glitchboyl/couch-potato-setup
+claude plugin marketplace add glitchboyl/couch-potato
 ```
 
 Or from a local clone:
 
 ```bash
-claude plugin marketplace add ./couch-potato-setup
+claude plugin marketplace add ./couch-potato
 ```
 
 Step 2 — Install the plugin:
 
 ```bash
-claude plugin install couch-potato@couch-potato-setup
+claude plugin install couch-potato@couch-potato
 ```
 
 No restart required after install. Run `/reload-plugins` in an active session to activate.
@@ -88,7 +88,7 @@ The init skill detects your environment (Claude Code version, agent teams flag),
 To load the plugin for a single session without installing:
 
 ```bash
-claude --plugin-dir /path/to/couch-potato-setup
+claude --plugin-dir /path/to/couch-potato
 ```
 
 Then run `/couch-potato:init` in that session.

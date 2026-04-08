@@ -3,7 +3,7 @@
 # Checks if a newer version of Couch Potato is available on GitHub.
 
 LOCAL_VERSION_FILE="${CLAUDE_PLUGIN_ROOT}/VERSION"
-REMOTE_VERSION_URL="https://raw.githubusercontent.com/glitchboyl/couch-potato-setup/main/VERSION"
+REMOTE_VERSION_URL="https://raw.githubusercontent.com/glitchboyl/couch-potato/main/VERSION"
 
 # Read local version
 if [ ! -f "$LOCAL_VERSION_FILE" ]; then

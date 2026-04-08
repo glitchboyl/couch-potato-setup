@@ -27,7 +27,7 @@ If `.couch/config.json` does not exist or `version` is missing, abort with:
 Fetch the remote CHANGELOG.md:
 
 ```
-https://raw.githubusercontent.com/glitchboyl/couch-potato-setup/main/CHANGELOG.md
+https://raw.githubusercontent.com/glitchboyl/couch-potato/main/CHANGELOG.md
 ```
 
 If the fetch fails (network unreachable, non-200 response, timeout), abort with a clear error message. Do not proceed without the changelog — the update flow depends on it to determine what changed.
