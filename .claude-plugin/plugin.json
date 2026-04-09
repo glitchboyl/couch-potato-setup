@@ -1,6 +1,6 @@
 {
   "name": "couch-potato",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "AI-assisted development workflow for Claude Code",
   "skills": "./skills/"
 }

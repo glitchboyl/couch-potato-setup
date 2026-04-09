@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file. Format: Kee
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-04-09
+
+### Added
+
+- Initialization gate ("Before you do anything else") in team-mode `SKILL-body.md` plus Bash-fallback trap and hook-blocked Situation bullet (req-011)
+- Authorized bootstrap Situation and joint convergence-test standing diagnostic, captured in `.couch/retrospectives/req-012.md` (req-012)
+- XML-fence pattern for injected prior-session context in both protocol.md files (req-013)
+- Fact-verification rule for adversarial review — added to `agents/architect.md` Self-Awareness and both challenger SOULs (req-016)
+
+### Changed
+
+- `team_name` is now a freeform hint passed to `TeamCreate`; agents must capture and reuse the harness-returned slug for all downstream `Agent` spawns. `run.json` records both `requirement_id` and `team_slug`. Protocol.md step 8 rewritten to the capture-and-use pattern, landing req-009 Proposal A (req-017)
+- Imported pre-existing v3.4.0 refactor: no project-side `references/` copy; SOUL paths, schema, and README updated accordingly (req-014)
+
+### Fixed
+
+- `init` writes the agent-teams flag to `settings.local.json` instead of the committed `.claude/settings.json` (req-015)
+- Removed global `PreToolUse` hook registration and deleted dead `hooks/restrict_*_path.sh` scripts — plugin hooks can't be skill-scoped; frontmatter `disallowedTools` is the correct mechanism
+- Three stale `{req-id}/config.json` path references corrected (req-017)
+
+### Reverted
+
+- req-015's `team_name MUST equal req-id` constraint — prevented no concrete failure mode and conflicted with the harness's global team namespace. Replaced by the capture-and-use rule above (req-017)
+
 ## [3.3.0] - 2026-04-08
 
 ### Removed
