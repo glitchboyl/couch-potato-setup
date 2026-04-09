@@ -5,7 +5,11 @@ description: Update the Couch Potato workflow files in this project to the lates
 
 # /couch-potato:update
 
-Update the Couch Potato workflow files installed in this project. Fetches the remote changelog, shows the user what changed since their installed version, applies verbatim files automatically, and prompts for customizable files before writing.
+Update the Couch Potato files installed in this project. Fetches the remote changelog, shows the user what changed since their installed version, updates the project-side agent definitions and Team Lead SKILL.md, and bumps `version` in `.couch/config.json`.
+
+Workflow, protocol, schemas, and SOUL defaults live only in the plugin tree and are read by agents via `${CLAUDE_PLUGIN_ROOT}` — no project-side copy exists, so there is nothing to "re-copy" on update. `/reload-plugins` picks up the new plugin content after it has been installed by `claude plugin install`.
+
+**Known coupling**: Step 2 hard-codes `https://raw.githubusercontent.com/glitchboyl/couch-potato/main/CHANGELOG.md`. If the plugin is renamed or forked, this URL must be updated in lockstep.
 
 ---
 
@@ -85,51 +89,37 @@ Check `mode_switch_offered` in `.couch/config.json`. If `mode_switch_offered` is
 
 Prompt once:
 
-> "You're running the multi-agent-mode workflow. Your Claude Code now supports agent teams. Want to switch to team-mode for better coordination? This replaces workflow.md, protocol.md, SKILL-body.md, and souls/ with team-mode versions. [Y/N]"
+> "You're running the multi-agent-mode workflow. Your Claude Code now supports agent teams. Want to switch to team-mode for better coordination? A mode switch just flips the `mode` field in `.couch/config.json` and regenerates the project-side `SKILL.md` from the team-mode SKILL-body. No other files change — agents read the mode from config at runtime. [Y/N]"
 
 Set `mode_switch_offered: true` in `.couch/config.json` immediately after prompting (regardless of the user's answer), so this prompt does not repeat on future update runs.
 
-- **If yes**: install team-mode workflow files (overwrite the multi-agent-mode files with their team-mode counterparts from `${CLAUDE_PLUGIN_ROOT}/references/team-mode/`). Update `mode` to `"team-mode"` in `.couch/config.json`. Then run normal update logic for team-mode files.
-- **If no**: run normal update logic for multi-agent-mode files only.
+- **If yes**: set `mode: "team-mode"` in `.couch/config.json` and regenerate `.claude/skills/couch-potato/SKILL.md` from `${CLAUDE_PLUGIN_ROOT}/references/team-mode/SKILL-body.md`.
+- **If no**: proceed without mode change.
 
-**If the environment still does not satisfy team-mode requirements**: skip the prompt, run normal update logic for multi-agent-mode files.
+**If the environment still does not satisfy team-mode requirements**: skip the prompt.
 
 ---
 
 ## Step 6 — Classify and apply file updates
 
-For each file in the classification table below (filtered by installed mode), apply the appropriate update behavior.
+For each file in the classification table below, apply the appropriate update behavior.
 
 ### File classification table
 
-| Source path (under `${CLAUDE_PLUGIN_ROOT}/`) | Destination path (under project) | Category | Mode scope |
-|---|---|---|---|
-| `references/team-mode/workflow.md` | `.claude/skills/couch-potato/references/team-mode/workflow.md` | Verbatim | team-mode installs |
-| `references/team-mode/protocol.md` | `.claude/skills/couch-potato/references/team-mode/protocol.md` | Verbatim | team-mode installs |
-| `references/team-mode/SKILL-body.md` | `.claude/skills/couch-potato/references/team-mode/SKILL-body.md` | Verbatim | team-mode installs |
-| `references/team-mode/souls/` (all files, iterated) | `.claude/skills/couch-potato/references/team-mode/souls/` | Verbatim | team-mode installs |
-| `references/multi-agent-mode/workflow.md` | `.claude/skills/couch-potato/references/multi-agent-mode/workflow.md` | Verbatim | multi-agent installs |
-| `references/multi-agent-mode/protocol.md` | `.claude/skills/couch-potato/references/multi-agent-mode/protocol.md` | Verbatim | multi-agent installs |
-| `references/multi-agent-mode/SKILL-body.md` | `.claude/skills/couch-potato/references/multi-agent-mode/SKILL-body.md` | Verbatim | multi-agent installs |
-| `references/multi-agent-mode/souls/` (all files, iterated) | `.claude/skills/couch-potato/references/multi-agent-mode/souls/` | Verbatim | multi-agent installs |
-| `references/schemas.md` | `.claude/skills/couch-potato/references/schemas.md` | Verbatim | both modes |
-| `hooks/restrict_write_path.sh` | `.claude/skills/couch-potato/hooks/restrict_write_path.sh` | Verbatim | both modes |
-| `references/config.schema.json` | `.couch/config.schema.json` | Verbatim | both modes |
-| `agents/architect.md` | `.claude/agents/architect.md` | Verbatim | both modes |
-| `agents/researcher.md` | `.claude/agents/researcher.md` | Verbatim | both modes |
-| `agents/coder.md` | `.claude/agents/coder.md` | Verbatim | both modes |
-| `agents/tester.md` | `.claude/agents/tester.md` | Verbatim | both modes |
-| `agents/retrospective.md` | `.claude/agents/retrospective.md` | Verbatim | both modes |
-| — | `.claude/skills/couch-potato/SKILL.md` | Customizable | both modes |
-| — | `.couch/config.json` | Customizable | both modes |
-| — | `.claude/agents/*.md` (user-added agents) | Customizable | both modes |
-| — | `CLAUDE.md` | Customizable | both modes |
+| Source path (under `${CLAUDE_PLUGIN_ROOT}/`) | Destination path (under project) | Category |
+|---|---|---|
+| `agents/architect.md` | `.claude/agents/architect.md` | Verbatim |
+| `agents/researcher.md` | `.claude/agents/researcher.md` | Verbatim |
+| `agents/coder.md` | `.claude/agents/coder.md` | Verbatim |
+| `agents/tester.md` | `.claude/agents/tester.md` | Verbatim |
+| `agents/retrospective.md` | `.claude/agents/retrospective.md` | Verbatim |
+| — | `.claude/skills/couch-potato/SKILL.md` | Customizable |
+| — | `.couch/config.json` | Customizable |
+| — | `CLAUDE.md` | Customizable |
 
-**Soul files: do not hardcode the file list.** Iterate the source souls directory at runtime:
-- For team-mode: iterate `${CLAUDE_PLUGIN_ROOT}/references/team-mode/souls/` and copy each `.md` file found.
-- For multi-agent-mode: iterate `${CLAUDE_PLUGIN_ROOT}/references/multi-agent-mode/souls/` and copy each `.md` file found (this includes `team-lead.md`, which does not exist in the team-mode souls directory).
+**Nothing else is copied into the project.** Workflow, protocol, schemas, SOUL defaults, hook scripts, and `config.schema.json` all live in the plugin tree and are read by agents via `${CLAUDE_PLUGIN_ROOT}` at runtime. There is no project-side copy to keep in sync.
 
-**`${CLAUDE_PLUGIN_DATA}/souls/` is NEVER overwritten.** This directory contains the user's editable soul copies. The update skill writes only to the project-side `.claude/skills/couch-potato/references/<mode>/souls/` paths, which are the verbatim reference copies used as defaults before user customization. If a file exists in `${CLAUDE_PLUGIN_DATA}/souls/`, it is the user's customized version and must not be touched during any update operation.
+**`${CLAUDE_PLUGIN_DATA}/souls/` is NEVER touched by update.** It holds the user's editable SOUL overrides. Init seeds it once from the plugin defaults; update leaves it alone forever.
 
 ### Verbatim files
 
@@ -141,6 +131,8 @@ For each customizable file that exists in the project:
 1. Show the diff between the current file and the incoming version.
 2. Prompt: `[Y] overwrite  [N] keep mine  [D] show diff again`
 3. Apply the user's choice. If [N], leave the file unchanged.
+
+For `.claude/skills/couch-potato/SKILL.md`, the "incoming version" is `${CLAUDE_PLUGIN_ROOT}/references/<installed-mode>/SKILL-body.md`.
 
 ---
 

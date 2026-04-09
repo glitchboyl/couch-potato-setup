@@ -15,7 +15,7 @@
       "id": "prop-002",
       "source_retrospective": "req-004",
       "status": "applied",
-      "target_file": "templates/skill/references/souls/coder.md",
+      "target_file": "${CLAUDE_PLUGIN_ROOT}/references/team-mode/souls/coder.md",
       "section": "Failure modes to avoid (append)",
       "summary": "Train Coder attention to notice when an edit removes a should/must/never constraint from the source file being adapted.",
       "proposed_text": "When adapting or refactoring a source file, track what constraints the source imposed and whether your edit preserves all of them. A narrative that said 'X is enforced' must still say so after your edit — or you must have escalated the missing enforcement. If your edit removes a should/must/never from the source, you are removing a constraint; that is a design decision that does not belong to Coder.",

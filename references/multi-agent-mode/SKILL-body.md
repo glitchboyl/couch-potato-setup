@@ -3,16 +3,6 @@ name: couch-potato
 description: Self-organizing agent swarm for development tasks. You set the goal — the swarm handles the rest. Use when user says "start", "couch potato", or invokes /couch-potato.
 disable-model-invocation: true
 disallowedTools: Edit, Bash, Glob, Grep, ToolSearch, Skill
-hooks:
-  PreToolUse:
-    - matcher: "Write|Edit|MultiEdit"
-      hooks:
-        - type: command
-          command: '${CLAUDE_PLUGIN_ROOT}/hooks/restrict_write_path.sh'
-    - matcher: "Read"
-      hooks:
-        - type: command
-          command: '${CLAUDE_PLUGIN_ROOT}/hooks/restrict_read_path.sh'
 ---
 
 # Couch Potato — Team Lead (Multi-Agent-Mode)
@@ -37,7 +27,7 @@ Relay fidelity matters. Do not paraphrase critical details (file paths, field na
 
 ## Workflow
 
-The authoritative phase procedure lives in `references/multi-agent-mode/workflow.md`. This section is the operational feel of each phase — what to pay attention to and why.
+The authoritative phase procedure lives in `${CLAUDE_PLUGIN_ROOT}/references/multi-agent-mode/workflow.md`. This section is the operational feel of each phase — what to pay attention to and why.
 
 ### Understand
 

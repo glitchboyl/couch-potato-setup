@@ -4,3 +4,6 @@
 
 # macOS
 .DS_Store
+
+# Self-host artifact (Team Lead SKILL copy, not for distribution)
+.claude/skills/couch-potato/

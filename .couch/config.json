@@ -1,9 +1,8 @@
 {
-  "version": "3.0.0",
+  "version": "3.4.0",
+  "mode": "team-mode",
   "skill": "couch-potato",
-  "server_ports": {},
   "project_path": ".",
-  "frontend_path": ".",
   "check_command": null,
   "lint_command": null,
   "build_command": null,

@@ -7,7 +7,7 @@
     {
       "name": "couch-potato",
       "source": "./",
-      "version": "3.2.1",
+      "version": "3.4.0",
       "description": "AI-assisted development workflow for Claude Code"
     }
   ]

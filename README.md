@@ -106,6 +106,8 @@ claude plugin install couch-potato@couch-potato
 
 After any source change, re-run `plugin install` and `/reload-plugins`.
 
+**Cache is authoritative.** Claude Code loads installed plugins from `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` — not from this repo. Edits to source files have no effect until `plugin install` re-copies them into the cache. If a fix looks correct in source but `/reload-plugins` still errors, you are almost certainly staring at the old cached copy.
+
 ## Usage
 
 After installation, invoke the swarm:
@@ -134,6 +136,20 @@ ${CLAUDE_PLUGIN_DATA}/
 ├── retrospectives/            # Post-run analysis (committed)
 └── requirements/              # Per-requirement state (gitignored)
 ```
+
+
+
+### What init writes vs what the plugin serves
+
+`/couch-potato:init` writes files **into your project**. The plugin itself ships a separate set of files that agents read directly from the plugin cache path. These two sets are distinct — confusing them is how you end up "fixing" source files that the runtime never loads, or declaring install complete because `config.json` exists while the `/couch-potato` command is still missing.
+
+| Written by `/couch-potato:init` into the project | Shipped by the plugin (read from `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`) |
+|---|---|
+| `.couch/config.json` — project configuration | `agents/` — agent definitions (architect, coder, tester, researcher, retrospective) |
+| `.claude/skills/couch-potato/SKILL.md` — **gate file for the `/couch-potato` slash command; without it the command is unavailable** | `skills/init/`, `skills/update/`, `skills/codex-bridge/` — the plugin's own skills |
+| `.claude/agents/*.md` — agent copies | `hooks/` — `SessionStart` and `PreToolUse` hooks |
+| `.couch/requirements/` (gitignored), `.couch/retrospectives/` | `references/` — workflow docs, protocol, schemas, SOUL defaults |
+| CLAUDE.md Couch Potato stanza | |
 
 ## Supported stacks
 

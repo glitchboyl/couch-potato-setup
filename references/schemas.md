@@ -57,10 +57,8 @@ These are contracts between Team Lead and agents. Agents should read this file w
 - No dangling `depends_on` references
 - Tasks within the same parallel wave must not depend on each other
 - All wave task IDs exist in tasks array
-- `file_ownership` is a reverse index derived from each task's `files` array — every entry must correspond to that task's own `files`. Architect generates it for conflict checking; task `files` is the single source of truth
+- `file_ownership` is a file→tasks index derived from each task's `files` array — every entry must correspond to that task's own `files`. Architect generates it for conflict checking; task `files` is the single source of truth
 - Tasks with `requires_verification: true` must have acceptance criteria specific enough for Tester to verify
-
-These rules can optionally be enforced via a settings.json hook on Write calls to `tasks.json` paths. See `config.json` `policy.tasks_validation` for configuration.
 
 ---
 
@@ -93,7 +91,9 @@ Why this work is needed. Background and motivation.
 
 ## SOUL File (written by human or Retrospective Agent, read by Team Lead at spawn)
 
-Location: `.claude/skills/couch-potato/references/souls/<role>.md`
+Location (resolution order):
+1. `${CLAUDE_PLUGIN_DATA}/souls/<role>.md` — user override (primary)
+2. `${CLAUDE_PLUGIN_ROOT}/references/<mode>/souls/<role>.md` — plugin default (fallback)
 
 Structure:
 ```
@@ -143,7 +143,7 @@ Cross-reference with past retrospectives. First occurrence = note. Second occurr
 
 ## Improvement Proposals
 Only if pattern occurs 2+ times across runs:
-- **Target file**: <.claude/agents/*.md OR references/souls/*.md OR SKILL.md>
+- **Target file**: <`.claude/agents/*.md` OR `${CLAUDE_PLUGIN_DATA}/souls/*.md` OR `${CLAUDE_PLUGIN_ROOT}/references/<mode>/souls/*.md` OR SKILL.md>
 - **Section**: <specific section>
 - **Current text**: <what's there now>
 - **Proposed text**: <specific replacement>

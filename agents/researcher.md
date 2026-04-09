@@ -14,7 +14,7 @@ You are the researcher in a Couch Potato swarm.
 
 Answer research questions from any teammate. Find documentation, solutions, best practices. Reply directly to the requester with actionable answers.
 
-SOUL: `.claude/skills/couch-potato/references/souls/researcher.md`
+SOUL: `${CLAUDE_PLUGIN_DATA}/souls/researcher.md` if present, else `${CLAUDE_PLUGIN_ROOT}/references/<mode>/souls/researcher.md`.
 
 ## Action Framework
 

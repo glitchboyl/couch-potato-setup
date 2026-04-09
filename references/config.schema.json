@@ -4,7 +4,7 @@
   "title": "Couch Potato Config",
   "description": "Schema for .couch/config.json",
   "type": "object",
-  "required": ["version", "skill"],
+  "required": ["version", "skill", "mode"],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -14,6 +14,19 @@
     "skill": {
       "type": "string",
       "description": "Name of the installed skill that drives the swarm (e.g. \"couch-potato\")"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["team-mode", "multi-agent-mode"],
+      "description": "Workflow mode for this installation"
+    },
+    "mode_switch_offered": {
+      "type": "boolean",
+      "description": "Set to true by the update skill when a mode switch is offered to the user. Optional."
+    },
+    "project_slug": {
+      "type": "string",
+      "description": "Globally-unique prefix used to namespace team names in ~/.claude/teams/ so that teams from different projects never collide. Team names are formed as <project_slug>-<req-id> (e.g. \"couch-potato-req-017\"). Optional — if absent at runtime, Team Lead derives the value from the basename of PROJECT_ROOT and writes it back to config.json so the slug stabilises for all future runs."
     },
     "stack": {
       "type": "string",
@@ -82,10 +95,6 @@
           "examples": [
             ["user_override", "complexity_rule", "task_model", "agent_default"]
           ]
-        },
-        "tasks_validation": {
-          "type": "boolean",
-          "description": "Enable settings.json hook to validate tasks.json on write"
         },
         "default_requires_verification_by_type": {
           "type": "object",
