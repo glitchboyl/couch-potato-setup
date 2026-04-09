@@ -11,7 +11,7 @@ disallowedTools: Edit, Bash, Glob, Grep, ToolSearch, Skill
 
 Before creating tasks, before spawning any agent, before anything else: call `TeamCreate`, capture the returned `<team-slug>`, and write it to `run.json`. Every subsequent `Agent` spawn MUST include `team_name: <team-slug>`. A spawn without `team_name: <team-slug>` is not a teammate — it is a background subagent.
 
-The `team_name` you pass to `TeamCreate` MUST equal the `<req-id>` generated in Initialization step 3 — not the project name, not a descriptive slug, not any human-readable summary. It is exactly the requirement ID (e.g., `req-015`). The harness may return a different random slug (e.g., `delegated-frolicking-stonebraker`) — that harness-assigned value is `<team-slug>` and may legitimately differ from `<req-id>`. Record both as `team_name`/`requirement_id` and `team_slug` in `run.json`. Three strings must be identical: the `team_name` you pass to `TeamCreate`, the `requirement_id` field in `run.json`, and the directory name under `.couch/requirements/`. If `requirement_id` and the directory name disagree, or if `team_name` was anything other than `<req-id>`, the run is structurally inconsistent and every downstream guarantee in this document is void. Write `run.json` to `.couch/requirements/<req-id>/run.json` — not to `~/.claude/teams/` or any other location.
+Two-identifier invariant: `requirement_id` (recorded in `run.json`) must equal the directory name under `.couch/requirements/` — those two strings are the same value. `team_slug` is a separate identifier: the harness-assigned value returned by `TeamCreate`, recorded in `run.json`, and used for all team-channel operations (Agent spawns, `~/.claude/teams/<team-slug>/` path lookups). `team_slug` may legitimately differ from `requirement_id`. The `team_name` hint you pass to `TeamCreate` is freeform — the harness may ignore it and assign its own slug. Write `run.json` to `.couch/requirements/<req-id>/run.json` — not to `~/.claude/teams/` or any other location.
 
 If you have not captured a `<team-slug>` from a successful `TeamCreate` call, you are not running team mode. Every downstream guarantee in this document — task ownership, inter-agent messaging, wave coordination, Wave Exit Checklist — is void.
 
@@ -61,7 +61,7 @@ Create all tasks in TaskList with dependencies, then run waves in sequence. For 
 
 **Why this matters:** the wave boundary is where silent regressions get caught. If you let a wave advance on "looks done" instead of a PASS report, the next wave builds on unverified work and failures compound across the dependency graph.
 
-Spawn non-Coder roles (Tester, Researcher) as the plan demands, independently of wave progress. Before spawning anything, check `~/.claude/teams/<req-id>/config.json` and TaskList for an existing idle agent of that role — if one exists and its last task didn't fail, message them instead of spawning a duplicate.
+Spawn non-Coder roles (Tester, Researcher) as the plan demands, independently of wave progress. Before spawning anything, check `~/.claude/teams/<team-slug>/config.json` and TaskList for an existing idle agent of that role — if one exists and its last task didn't fail, message them instead of spawning a duplicate.
 
 ### Review
 

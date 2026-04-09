@@ -22,14 +22,14 @@ An accepted improvement proposal affects your role: [summary]
 </recalled_context>
 [End recalled memory context]
 ```
-8. `TeamCreate` with `team_name: <req-id>` — this creates the shared task list and messaging channel for the swarm
+8. `TeamCreate` with `team_name: <hint>` — the hint is freeform and does not need to be unique; the Claude Code harness may rename it on collision with an existing team (harness generates a random slug like `delegated-frolicking-stonebraker` from its built-in word list). **Capture the slug the harness actually returns** — this is `<team-slug>`, and it is the only identifier that matters for downstream operations. Use `<team-slug>` for every subsequent reference: all `Agent` spawn `team_name:` parameters, `~/.claude/teams/<team-slug>/config.json` path discovery, and inbox lookups. Record in `run.json`: `requirement_id` (bare `req-NNN`) and `team_slug` (the harness-returned slug).
 9. Create `run.json` at `.couch/requirements/<req-id>/run.json` per `${CLAUDE_PLUGIN_ROOT}/references/schemas.md`. Update `phase` at each workflow gate.
 
 ### If team state appears inconsistent or spawn errors
 If team state appears inconsistent, or a spawn call errors:
 
 1. Before retrying a spawn, re-read TaskList. If the target task is already in_progress or completed, do NOT retry — a previous spawn attempt succeeded despite the error. Investigate the error as a harness symptom, not a task failure.
-2. Before reconstructing a team, inspect ~/.claude/teams/{req-id}/config.json directly. If the JSON is malformed, preserve the file as config.json.corrupt before any TeamDelete / TeamCreate, so the corruption can be filed upstream.
+2. Before reconstructing a team, inspect ~/.claude/teams/<team-slug>/config.json directly. `<team-slug>` is the harness-assigned name captured at TeamCreate time (recorded in `run.json`). If the JSON is malformed, preserve the file as config.json.corrupt before any TeamDelete / TeamCreate, so the corruption can be filed upstream.
 3. Prefer reusing idle Coders over tearing down and rebuilding the team when the active agent set is still valid. TeamDelete wipes TaskList and forces reconstruction; idle reuse preserves both.
 
 ### Spawn Prompt Template
@@ -43,7 +43,7 @@ Roster agents MUST be spawned using their corresponding `subagent_type` from `.c
 1. The idle agent's last task failed or was escalated — degraded context is unlikely to produce better results.
 2. The work is a review or judge task that requires an unbiased perspective — reuse would contaminate the review with prior task context.
 
-**How to check idle agent state:** Checking idle agents before spawn: (1) Read `~/.claude/teams/{req-id}/config.json` — the `members` array lists all agents currently on the team with their `name` and `agentType`. (2) Call TaskList — an agent with no in_progress tasks is a candidate for reuse. If the agent's last task shows completed, it is idle and healthy. If it shows in_progress with no recent activity, treat it as degraded and spawn fresh. There is no explicit idle-status field in the harness; idle must be inferred from task state. Two tool calls total: one Read, one TaskList. If Team Lead received a TeammateIdle message from the agent, that supersedes TaskList inference.
+**How to check idle agent state:** Checking idle agents before spawn: (1) Read `~/.claude/teams/<team-slug>/config.json` — the `members` array lists all agents currently on the team with their `name` and `agentType`. (2) Call TaskList — an agent with no in_progress tasks is a candidate for reuse. If the agent's last task shows completed, it is idle and healthy. If it shows in_progress with no recent activity, treat it as degraded and spawn fresh. There is no explicit idle-status field in the harness; idle must be inferred from task state. Two tool calls total: one Read, one TaskList. If Team Lead received a TeammateIdle message from the agent, that supersedes TaskList inference.
 
 **Model tier.**
 
@@ -51,7 +51,7 @@ Roster agents MUST be spawned using their corresponding `subagent_type` from `.c
 - **Always pass `model:` explicitly** in every Agent tool call when spawning roster agents, even if it matches the frontmatter default. Opus orchestrators will otherwise non-deterministically override Sonnet frontmatter by inheriting their own model. NEVER downgrade below the agent's frontmatter default.
 - **Complexity upgrade**: for Coder tasks with complexity L, upgrade to opus at spawn time by passing `model: "opus"` in the Agent tool call.
 
-Every permanent agent spawn includes: `team_name: <req-id>`, role, SOUL (read from `${CLAUDE_PLUGIN_ROOT}/references/team-mode/souls/<role>.md` and included verbatim), requirement ID + title, project root, dev server port, state dir (`.couch/requirements/<req-id>/`), relevant MCP tools, and "Check TaskList and start working."
+Every permanent agent spawn includes: `team_name: <team-slug>`, role, SOUL (read from `${CLAUDE_PLUGIN_ROOT}/references/team-mode/souls/<role>.md` and included verbatim), requirement ID + title, project root, dev server port, state dir (`.couch/requirements/<req-id>/`), relevant MCP tools, and "Check TaskList and start working."
 
 For Coder spawns, additionally include the task's explicit file ownership list from `tasks.json` (`file_ownership`) — this defines the Coder's file access boundary for their claimed task. Also include the task's domain tags (e.g., "React, UI, API integration") to guide skill and tool discovery.
 
